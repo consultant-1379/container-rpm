@@ -1,0 +1,1 @@
+/opt/ericsson/ERICprescontainer_CXP9030205/scripts/deregister_topbar_component "container/components/LogoutButton/LogoutButton"

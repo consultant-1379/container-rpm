@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.ericsson.nms</groupId>
+        <artifactId>integration</artifactId>
+        <version>13.2.0.119</version>
+    </parent>
+
+    <groupId>com.ericsson.oss.clientcommon</groupId>
+    <artifactId>ERICprescontainer_CXP9030205</artifactId>
+    <version>1.7.1</version>
+
+    <packaging>${rpm.packaging}</packaging>
+    <name>Container RPM Assembly</name>
+
+    <properties>
+        <com.ericsson.oss.rpm.architecture>noarch</com.ericsson.oss.rpm.architecture>
+        <rpm-root>opt</rpm-root>
+        <comp-name>ericsson</comp-name>
+        <install-path>${project.artifactId}</install-path>
+    </properties>
+
+      <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.5</version>
+                <executions>
+                    <execution>
+                        <id>unpack_tools</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.ericsson.oss.clientcommon</groupId>
+                                    <artifactId>container</artifactId>
+                                    <version>RELEASE</version>
+                                    <type>tar.gz</type>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+             <plugin>
+                <groupId>com.github.goldin</groupId>
+                <artifactId>copy-maven-plugin</artifactId>
+                <version>0.2.5</version>
+                <executions>
+                    <execution>
+                        <id>copy-common-to-docs</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <resources>
+                                <resource>
+                                    <targetPath>${basedir}/target/main/conf/httpd</targetPath>
+                                    <directory>${basedir}</directory>
+                                    <file>${basedir}/src/main/conf/httpd/{{artifactId}}.conf</file>
+                                    <destFileName>${project.artifactId}.conf</destFileName>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.google.code.maven-replacer-plugin</groupId>
+                <artifactId>replacer</artifactId>
+                <version>1.5.2</version>
+                <executions>
+                    <execution>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                        <configuration>
+                            <file>${basedir}/target/main/conf/httpd/${project.artifactId}.conf</file>
+                            <replacements>
+                                <replacement>
+                                    <token>%artifactId%</token>
+                                    <value>${project.artifactId}</value>
+                                </replacement>
+                            </replacements>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <phase>process-resources</phase>
+                        <id>replace_config</id>
+                        <goals>
+                            <goal>replace</goal>
+                        </goals>
+                        <configuration>
+                            <file>${basedir}/target/dependencies/config.js</file>
+                            <replacements>
+                                <replacement>
+                                    <token>defaultApp: ''</token>
+                                    <value>defaultApp: 'launcher',
+	properties: {
+		help: {
+			"helpCenter": true
+		},
+		helpbutton: {
+			"helpCenter": true
+		}
+	}
+									</value>
+                                </replacement>
+                                <replacement>
+                                    <token>name: ''</token>
+                                    <value>name: 'ENM'</value>
+                                </replacement>
+                            </replacements>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>rpm-maven-plugin</artifactId>
+                <configuration>
+                    <group>Applications/System</group>
+                    <needarch>noarch</needarch>
+                    <autoProvides>true</autoProvides>
+                    <autoRequires>false</autoRequires>
+                    <requires>
+                        <require>ERICjscore_CXP9030400</require>
+                    </requires>
+                    <mappings combine.self="override">
+                        <mapping>
+                            <directory>/${rpm-root}/${comp-name}</directory>
+                            <filemode>775</filemode>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                        </mapping>
+                        <mapping>
+                            <directory>/${rpm-root}/${comp-name}/${install-path}</directory>
+                            <filemode>775</filemode>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                        </mapping>
+                        <mapping>
+                            <directory>/${rpm-root}/${comp-name}/${install-path}/html</directory>
+                            <filemode>775</filemode>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                            <sources>
+                                <source>
+                                    <location>target/dependencies</location>
+                                    <excludes>
+                                        <exclude>containerComponents.js</exclude>
+                                        <exclude>scripts</exclude>
+                                    </excludes>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                            <directory>/${rpm-root}/${comp-name}/${install-path}/scripts</directory>
+                            <filemode>775</filemode>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                            <sources>
+                                <source>
+                                    <location>target/dependencies/scripts</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                        <mapping>
+                            <directory>/etc/httpd/conf.d/ui/</directory>
+                            <filemode>644</filemode>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>target/main/conf/httpd</location>
+                                </source>
+                            </sources>
+                        </mapping>
+                    </mappings>
+                    <postinstallScriptlet>
+                        <scriptFile>${basedir}/src/main/scripts/postinstall.sh</scriptFile>
+                        <fileEncoding>utf-8</fileEncoding>
+                    </postinstallScriptlet>
+                    <preremoveScriptlet>
+                        <scriptFile>${basedir}/src/main/scripts/preremove.sh</scriptFile>
+                        <fileEncoding>utf-8</fileEncoding>
+                    </preremoveScriptlet>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.ericsson.oss.clientcommon</groupId>
+            <artifactId>container</artifactId>
+            <version>RELEASE</version>
+            <type>tar.gz</type>
+        </dependency>
+    </dependencies>
+
+  <scm>
+    <tag>container-pom-1.7.1</tag>
+  </scm>
+</project>

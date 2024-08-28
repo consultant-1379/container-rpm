@@ -1,0 +1,25 @@
+# Glogal .gitingore specifically for Container project #
+
+# Eclipse related files
+.settings
+.classpath
+.project
+
+# InteliJ files #
+worskpace.xml
+.idea/
+*.iml
+
+# We ignore log files as well
+*.log
+
+# Build Folders
+/ERICprescontainer_CXP9030205/target/
+target/
+
+# We should not commit node_modules for applications
+/root/node_modules/
+tmp/
+
+*.tar.gz
+/dist/
